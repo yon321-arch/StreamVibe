@@ -1,0 +1,311 @@
+<!DOCTYPE html><html lang="es" class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>StreamVibe</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{darkBg:'#0b0b0e',cardBg:'#141419'}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:Inter,sans-serif;background:#0b0b0e;color:#f4f4f5}::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:#27272a;border-radius:3px}
+.hid{display:none!important}.in{width:100%;background:#18181b;border:1px solid #27272a;border-radius:.75rem;padding:.65rem .9rem;font-size:.8rem;color:#fff;outline:none}.in:focus{border-color:#e11d48}
+.btn{background:#e11d48;color:#fff;font-weight:600;font-size:.8rem;padding:.65rem 1rem;border-radius:.75rem;transition:.2s}.btn:hover{background:#be123c}.btn2{background:#27272a;color:#e4e4e7;font-weight:600;font-size:.8rem;padding:.65rem 1rem;border-radius:.75rem}.btn2:hover{background:#3f3f46}
+.card{background:#141419;border:1px solid #27272a;border-radius:1rem}.chip{padding:.35rem .9rem;border-radius:99px;font-size:.75rem;font-weight:600;background:#141419;border:1px solid #27272a;color:#a1a1aa;white-space:nowrap}.chip.on{background:#e11d48;color:#fff;border-color:#e11d48}
+.nav{padding:.4rem .8rem;border-radius:.6rem;font-size:.85rem;color:#a1a1aa}.nav.on{background:#27272a99;color:#fff}.lbl{font-size:.7rem;color:#a1a1aa;display:block;margin-bottom:.25rem}
+</style></head>
+<body>
+<div id="toasts" class="fixed bottom-20 md:bottom-5 right-4 z-[90] space-y-2"></div>
+<div id="fx" class="fixed inset-0 z-[80] pointer-events-none overflow-hidden"></div>
+
+<!-- AUTH -->
+<section id="auth" class="fixed inset-0 z-50 bg-darkBg flex items-center justify-center p-4 overflow-y-auto">
+<div class="card max-w-md w-full p-7 space-y-4 shadow-2xl relative overflow-hidden">
+<div class="absolute -top-12 -right-12 w-40 h-40 bg-rose-600/10 rounded-full blur-3xl"></div>
+<div class="text-center"><div class="inline-flex w-14 h-14 rounded-2xl bg-rose-600/20 border border-rose-500/30 items-center justify-center mb-2"><span class="w-4 h-4 rounded-full bg-rose-600 animate-pulse"></span></div>
+<h1 class="text-2xl font-bold">StreamVibe</h1><p class="text-xs text-zinc-400">Conecta, transmite y comparte en vivo.</p></div>
+<div class="flex bg-zinc-900 rounded-xl p-1 text-xs font-semibold"><button id="t-login" class="flex-1 py-2 rounded-lg">Iniciar sesión</button><button id="t-reg" class="flex-1 py-2 rounded-lg">Registrarme</button></div>
+<div class="space-y-3">
+<div><label class="lbl">Correo electrónico</label><input id="f-email" type="email" autocomplete="email" class="in" placeholder="tu@correo.com"></div>
+<div><label class="lbl">Contraseña (mín. 8, con letras y números)</label><input id="f-pass" type="password" autocomplete="current-password" class="in" placeholder="••••••••"></div>
+<div id="f-pass2w" class="hid"><label class="lbl">Repite la contraseña</label><input id="f-pass2" type="password" autocomplete="new-password" class="in" placeholder="••••••••"></div>
+<p id="auth-err" class="text-xs text-rose-400 hid"></p>
+<button id="auth-go" class="btn w-full">Iniciar sesión</button></div>
+<div class="flex items-center gap-3 text-[10px] text-zinc-500"><hr class="flex-1 border-zinc-800">o continúa con<hr class="flex-1 border-zinc-800"></div>
+<div class="grid grid-cols-3 gap-2">
+<button onclick="social('Google')" class="btn2">Google</button><button onclick="social('Facebook')" class="btn2">Facebook</button><button onclick="phoneModal()" class="btn2">📱 Teléfono</button></div>
+<p class="text-[10px] text-zinc-500 text-center">Solo mayores de 18 años. Al continuar aceptas los Términos y la Política de Privacidad.</p>
+</div></section>
+
+<!-- SETUP -->
+<section id="setup" class="fixed inset-0 z-50 bg-darkBg flex items-center justify-center p-4 overflow-y-auto hid">
+<div class="card max-w-lg w-full p-7 space-y-4">
+<h2 class="text-xl font-bold">Configura tu perfil</h2><p class="text-xs text-zinc-400">Así te verán los demás en StreamVibe.</p>
+<div class="grid sm:grid-cols-2 gap-3">
+<div><label class="lbl">Nombre</label><input id="s-name" maxlength="30" class="in"></div>
+<div><label class="lbl">Usuario único (@)</label><input id="s-user" maxlength="20" class="in" placeholder="mi_usuario"></div>
+<div><label class="lbl">Fecha de nacimiento (18+)</label><input id="s-dob" type="date" class="in"></div>
+<div><label class="lbl">Género</label><select id="s-gender" class="in"><option>Masculino</option><option>Femenino</option><option>Otro / Prefiero no decirlo</option></select></div></div>
+<div><label class="lbl">País / Ciudad</label><input id="s-loc" maxlength="40" class="in"></div>
+<div><label class="lbl">Biografía</label><textarea id="s-bio" maxlength="160" rows="3" class="in"></textarea></div>
+<p id="setup-err" class="text-xs text-rose-400 hid"></p>
+<button id="setup-go" class="btn w-full">Completar registro 🚀</button></div></section>
+
+<!-- APP -->
+<div id="app" class="hid min-h-screen flex flex-col">
+<header class="sticky top-0 z-40 bg-darkBg/90 backdrop-blur border-b border-zinc-800 px-4 lg:px-8 py-3 flex items-center justify-between">
+<div class="flex items-center gap-5"><h1 onclick="show('explore')" class="text-xl font-bold cursor-pointer flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-pulse"></span>StreamVibe</h1>
+<nav id="nav-top" class="hidden md:flex gap-1"></nav></div>
+<div class="flex items-center gap-2">
+<button onclick="goLiveModal()" class="btn hidden sm:block !rounded-full !text-xs">🔴 Transmitir</button>
+<button onclick="walletModal()" class="card !rounded-full px-3.5 py-1.5 text-sm font-semibold">💎 <span id="gems">0</span></button>
+<img id="h-av" class="w-9 h-9 rounded-full border border-zinc-700 cursor-pointer object-cover" onclick="show('me')" alt=""></div></header>
+<nav id="nav-bot" class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-cardBg/95 backdrop-blur border-t border-zinc-800 flex justify-around py-2"></nav>
+
+<main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 pb-24 md:pb-6">
+<!-- EXPLORE -->
+<div id="v-explore" class="space-y-4">
+<div class="grid md:grid-cols-2 gap-3">
+<div onclick="promo('Semana Estrella de Regalos','Envía y recibe regalos esta semana para subir en el ranking. Premios: insignia dorada y 1,000 gemas al Top 3.')" class="cursor-pointer rounded-2xl p-5 border border-purple-500/30 bg-gradient-to-r from-purple-900/80 to-cardBg"><b class="text-sm">👑 Semana Estrella de Regalos</b><p class="text-xs text-purple-200/80 mt-1">Activo hasta el domingo 23:59</p></div>
+<div onclick="rankModal()" class="cursor-pointer rounded-2xl p-5 border border-rose-500/30 bg-gradient-to-r from-rose-900/80 to-cardBg"><b class="text-sm">🏆 Ranking semanal</b><p class="text-xs text-rose-200/80 mt-1">Mira quién lidera en regalos</p></div></div>
+<div class="flex gap-2 items-center flex-wrap"><input id="q" placeholder="🔍 Buscar streamers..." class="in !w-52"><div id="chips" class="flex gap-2 overflow-x-auto"></div></div>
+<div id="grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div></div>
+
+<!-- ROOM -->
+<div id="v-room" class="hid space-y-3"><button onclick="closeRoom()" class="text-xs text-zinc-400 hover:text-white">← Volver</button>
+<div class="grid lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-3">
+<div id="room-v" class="relative aspect-video rounded-2xl overflow-hidden border border-zinc-800 bg-gradient-to-br from-rose-900/40 to-zinc-950 flex items-center justify-center">
+<img id="room-img" class="absolute inset-0 w-full h-full object-cover" alt="">
+<div class="absolute top-3 left-3 bg-black/60 backdrop-blur px-3 py-2 rounded-2xl flex items-center gap-2 border border-white/10"><img id="room-av" class="w-8 h-8 rounded-full" alt=""><div><b id="room-name" class="text-xs block"></b><span id="room-loc" class="text-[10px] text-rose-400"></span></div></div>
+<div class="absolute bottom-3 left-3 bg-black/60 px-2.5 py-1 rounded-lg text-xs">👁 <span id="room-views"></span></div>
+<div id="combo" class="absolute bottom-3 right-3 text-2xl font-black text-amber-400 hid"></div></div>
+<div class="card p-3 flex items-center justify-between gap-2"><div class="min-w-0"><b id="room-title" class="text-sm block truncate"></b></div>
+<div class="flex gap-2"><button onclick="heart('❤️')" class="btn2">❤️</button><button onclick="heart('🔥')" class="btn2">🔥</button><button onclick="giftModal()" class="btn">🎁 Regalos</button></div></div></div>
+<div class="card flex flex-col h-[480px] lg:h-[560px]"><div class="p-3 border-b border-zinc-800 text-xs font-semibold text-zinc-400 uppercase">Chat en vivo</div>
+<div id="chat" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs"></div>
+<div class="p-3 border-t border-zinc-800 flex gap-2"><input id="chat-in" maxlength="200" class="in" placeholder="Escribe un comentario..."><button id="chat-send" class="btn2">➤</button></div></div></div></div>
+
+<!-- STUDIO -->
+<div id="v-studio" class="hid space-y-3">
+<div class="card p-4 flex items-center justify-between"><div><b class="text-sm">🔴 Estás en vivo</b><p id="st-sub" class="text-xs text-zinc-400"></p></div><button onclick="endLive()" class="btn">Finalizar</button></div>
+<div class="grid lg:grid-cols-3 gap-4"><div class="lg:col-span-2 space-y-3">
+<div class="relative aspect-video bg-black rounded-2xl overflow-hidden border border-zinc-800">
+<video id="cam" autoplay muted playsinline class="w-full h-full object-cover -scale-x-100"></video>
+<div id="cam-off" class="hid absolute inset-0 bg-zinc-950 flex items-center justify-center text-zinc-400 text-sm">📷 Cámara apagada</div>
+<div class="absolute top-3 left-3 bg-black/70 px-3 py-1.5 rounded-xl text-xs flex gap-3"><b class="text-rose-400">● <span id="timer">00:00:00</span></b><span>👁 <span id="st-views">0</span></span></div>
+<div class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 px-3 py-2 rounded-2xl flex gap-3"><button id="b-mic" onclick="tgl('mic')" class="btn2">🎤</button><button id="b-cam" onclick="tgl('cam')" class="btn2">📹</button></div></div>
+<div class="grid grid-cols-3 gap-3 text-xs"><div class="card p-3"><span class="lbl">Gemas ganadas</span><b>💎 <span id="st-gems">0</span></b></div><div class="card p-3"><span class="lbl">Calidad</span><b id="st-q" class="text-emerald-400">—</b></div><div class="card p-3"><span class="lbl">Categoría</span><b id="st-cat"></b></div></div></div>
+<div class="card flex flex-col h-[480px] lg:h-auto"><div class="p-3 border-b border-zinc-800 text-xs font-semibold text-zinc-400 uppercase">Chat de tu directo</div>
+<div id="st-chat" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs"></div>
+<div class="p-3 border-t border-zinc-800 flex gap-2"><input id="st-in" maxlength="200" class="in" placeholder="Escribe como streamer..."><button id="st-send" class="btn">➤</button></div></div></div></div>
+
+<!-- MESSAGES -->
+<div id="v-msgs" class="hid"><h2 class="text-xl font-bold mb-3">Mensajes</h2>
+<div class="card grid md:grid-cols-3 h-[600px] overflow-hidden"><div id="inbox" class="border-r border-zinc-800 p-2 space-y-1 overflow-y-auto"></div>
+<div class="md:col-span-2 flex flex-col min-h-0"><div class="p-3 border-b border-zinc-800 flex justify-between items-center"><b id="dm-name" class="text-sm"></b><button onclick="blockUser()" class="text-xs text-rose-400">🚫 Bloquear</button></div>
+<div id="dm" class="flex-1 p-4 overflow-y-auto space-y-2 text-xs"></div>
+<div class="p-3 border-t border-zinc-800 flex gap-2"><input id="dm-in" maxlength="300" class="in" placeholder="Escribe un mensaje..."><button id="dm-send" class="btn">➤</button></div></div></div></div>
+
+<!-- CREATOR -->
+<div id="v-creator" class="hid max-w-3xl mx-auto space-y-4"></div>
+<!-- ME -->
+<div id="v-me" class="hid max-w-3xl mx-auto space-y-4"></div>
+</main></div>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm hid items-center justify-center p-4"><div id="modal-b" class="card max-w-md w-full p-5 space-y-3 max-h-[90vh] overflow-y-auto"></div></div>
+
+<script>
+'use strict';
+const $=i=>document.getElementById(i),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let DB;try{DB=JSON.parse(localStorage.sv)}catch(e){}DB=DB&&DB.users?DB:{users:{},s:null};
+const save=()=>{try{localStorage.sv=JSON.stringify(DB)}catch(e){toast('No se pudo guardar (almacenamiento lleno)')}};
+let U=null;const saveU=()=>{DB.users[U.id]=U;save()};
+const rnd=a=>a[Math.floor(Math.random()*a.length)],key=d=>d.toLocaleDateString('en-CA');
+function toast(m){const d=document.createElement('div');d.className='card px-4 py-2.5 text-xs shadow-2xl';d.textContent=m;$('toasts').append(d);setTimeout(()=>d.remove(),3800)}
+function avatar(n){let h=0;for(const c of String(n))h=(h*31+c.charCodeAt(0))%360;return 'data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="hsl(${h},60%,35%)"/><text x="40" y="52" font-size="36" text-anchor="middle" fill="#fff" font-family="sans-serif">${esc((n||'?')[0].toUpperCase())}</text></svg>`)}
+function openModal(h){$('modal-b').innerHTML=h;$('modal').classList.remove('hid');$('modal').classList.add('flex')}
+function closeModal(){$('modal').classList.add('hid');$('modal').classList.remove('flex')}
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+const mhead=t=>`<div class="flex justify-between items-center border-b border-zinc-800 pb-2"><b class="text-sm">${t}</b><button onclick="closeModal()" class="text-zinc-400">✕</button></div>`;
+
+/* ---------- AUTH (cuentas locales; contraseñas con PBKDF2 + salt) ---------- */
+const b64=u=>btoa(String.fromCharCode(...u));
+async function hp(p,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(p),'PBKDF2',false,['deriveBits']);return b64(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:Uint8Array.from(atob(salt),c=>c.charCodeAt(0)),iterations:150000,hash:'SHA-256'},k,256)))}
+let mode='login',fails=0,lockUntil=0;
+function setMode(m){mode=m;$('f-pass2w').classList.toggle('hid',m==='login');$('auth-go').textContent=m==='login'?'Iniciar sesión':'Crear cuenta';$('auth-err').classList.add('hid');
+$('t-login').className='flex-1 py-2 rounded-lg '+(m==='login'?'bg-rose-600 text-white':'text-zinc-400');$('t-reg').className='flex-1 py-2 rounded-lg '+(m==='reg'?'bg-rose-600 text-white':'text-zinc-400')}
+$('t-login').onclick=()=>setMode('login');$('t-reg').onclick=()=>setMode('reg');
+const aerr=m=>{$('auth-err').textContent=m;$('auth-err').classList.remove('hid')};
+$('auth-go').onclick=async()=>{
+ if(!window.crypto||!crypto.subtle)return aerr('Abre la página con HTTPS para usar el cifrado de contraseñas.');
+ if(Date.now()<lockUntil)return aerr('Demasiados intentos. Espera unos segundos.');
+ const email=$('f-email').value.trim().toLowerCase(),pw=$('f-pass').value;
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))return aerr('Correo no válido.');
+ if(mode==='reg'){
+  if(pw.length<8||!/[a-zA-Z]/.test(pw)||!/\d/.test(pw))return aerr('La contraseña necesita 8+ caracteres, letras y números.');
+  if(pw!==$('f-pass2').value)return aerr('Las contraseñas no coinciden.');
+  if(DB.users['e:'+email])return aerr('Ese correo ya está registrado.');
+  const salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+  startSession(newUser('e:'+email,{email,salt,hash:await hp(pw,salt)}),true);
+ }else{
+  const u=DB.users['e:'+email];
+  if(!u||!u.hash||await hp(pw,u.salt)!==u.hash){if(++fails>=5){lockUntil=Date.now()+30000;fails=0}return aerr('Correo o contraseña incorrectos.')}
+  fails=0;startSession(u,!u.name);
+ }};
+function newUser(id,x){const u=Object.assign({id,name:'',user:'',bio:'',loc:'',dob:'',gender:'',gems:500,earned:0,blocked:[],dm:{},days:{},privacy:{online:'friends',loc:'friends',posts:'all'},followers:0,following:0,history:[]},x);DB.users[id]=u;save();return u}
+function social(p){toast(`Modo demo: ${p} real requiere configurar OAuth en tu servidor (ej. Firebase Auth).`);const id='s:'+p.toLowerCase();startSession(DB.users[id]||newUser(id,{email:p+' (demo)'}),!DB.users[id]?.name)}
+function phoneModal(){openModal(mhead('📱 Acceso por teléfono')+`<label class="lbl">Número con código de país</label><input id="ph" class="in" placeholder="+52 55 1234 5678" inputmode="tel"><button class="btn w-full" onclick="phoneSend()">Enviar código SMS</button>`)}
+let otp=null,phn='';
+function phoneSend(){phn=$('ph').value.replace(/[\s-]/g,'');if(!/^\+\d{8,15}$/.test(phn))return toast('Formato: +525512345678');otp={c:String(Math.floor(1e5+Math.random()*9e5)),exp:Date.now()+3e5,t:0};
+ toast('DEMO – tu código SMS es '+otp.c+' (el envío real requiere un proveedor como Twilio/Firebase)');
+ openModal(mhead('Código SMS')+`<p class="text-xs text-zinc-400">Código de 6 dígitos enviado a ${esc(phn)}</p><input id="oc" maxlength="6" class="in text-center tracking-[.5em] font-mono text-base" inputmode="numeric"><button class="btn w-full" onclick="phoneVerify()">Verificar</button>`)}
+function phoneVerify(){if(!otp||Date.now()>otp.exp||++otp.t>5)return toast('Código expirado. Solicita uno nuevo.');if($('oc').value.trim()!==otp.c)return toast('Código incorrecto.');otp=null;closeModal();const id='p:'+phn;startSession(DB.users[id]||newUser(id,{email:phn}),!DB.users[id]?.name)}
+function startSession(u,isNew){U=u;DB.s=u.id;save();$('auth').classList.add('hid');if(isNew||!u.name){$('s-name').value=u.name||'';$('setup').classList.remove('hid')}else enterApp()}
+$('setup-go').onclick=()=>{
+ const g=i=>$(i).value.trim(),e=m=>{$('setup-err').textContent=m;$('setup-err').classList.remove('hid')};
+ if(g('s-name').length<2)return e('Escribe tu nombre.');
+ if(!/^[a-z0-9_]{3,20}$/i.test(g('s-user')))return e('Usuario: 3-20 letras, números o _');
+ if(Object.values(DB.users).some(x=>x.id!==U.id&&x.user&&x.user.toLowerCase()===g('s-user').toLowerCase()))return e('Ese usuario ya existe.');
+ const dob=new Date(g('s-dob'));if(isNaN(dob)||(Date.now()-dob)/31557600000<18)return e('Debes ser mayor de 18 años.');
+ Object.assign(U,{name:g('s-name'),user:g('s-user'),dob:g('s-dob'),gender:$('s-gender').value,loc:g('s-loc')||'Sin ubicación',bio:g('s-bio')});saveU();$('setup').classList.add('hid');enterApp()};
+function logout(){if(live)return toast('Finaliza tu directo primero.');DB.s=null;save();location.reload()}
+
+/* ---------- NAV ---------- */
+const NAV=[['explore','Explorar','🧭'],['msgs','Mensajes','💬'],['creator','Creador','💰'],['me','Perfil','👤']];
+let cur='explore';
+function buildNav(){$('nav-top').innerHTML=NAV.map(n=>`<button data-v="${n[0]}" onclick="show('${n[0]}')" class="nav">${n[1]}</button>`).join('');
+ $('nav-bot').innerHTML=NAV.map(n=>`<button data-v="${n[0]}" onclick="show('${n[0]}')" class="nav flex flex-col items-center text-xs"><span class="text-lg">${n[2]}</span>${n[1]}</button>`).join('')+`<button onclick="goLiveModal()" class="btn !rounded-full !px-3">🔴</button>`}
+function show(v){if(cur==='room'&&v!=='room')closeRoom(true);cur=v;
+ ['explore','room','studio','msgs','creator','me'].forEach(x=>$('v-'+x).classList.toggle('hid',x!==(live&&v==='explore'?'studio':v)));
+ document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ if(v==='explore')renderGrid();if(v==='msgs')renderInbox();if(v==='creator')renderCreator();if(v==='me')renderMe();scrollTo(0,0)}
+function enterApp(){$('app').classList.remove('hid');buildNav();head();show('explore')}
+function head(){$('gems').textContent=U.gems.toLocaleString();$('h-av').src=avatar(U.name)}
+
+/* ---------- EXPLORE ---------- */
+const IMG=['photo-1529626455594-4ff0802cfb7e','photo-1494790108377-be9c29b29330','photo-1534528741775-53994a69daeb','photo-1507003211169-0a1dd7228f2d'].map(p=>`https://images.unsplash.com/${p}?w=600&auto=format&fit=crop&q=80`);
+const S=[{n:'Dinamicasss! ✨',t:'Música y charla con la comunidad',img:IMG[0],v:2807,loc:'Venezuela',c:'music'},{n:'Bailemos 💃',t:'Baila y diviértete',img:IMG[1],v:1576,loc:'Venezuela',c:'gaming'},{n:'Miss me? 💫',t:'Batalla PK ¡apoya con regalos!',img:IMG[2],v:5854,loc:'EE.UU.',c:'pk'},{n:'Liam Carter',t:'Nuevo streamer 🎮',img:IMG[3],v:1987,loc:'Venezuela',c:'newstreamer'}];
+const CATS=[['all','Todo'],['newstreamer','Nuevo'],['gaming','Gaming'],['music','Música'],['pk','PK ⚔️']];let cat='all';
+function renderGrid(){$('chips').innerHTML=CATS.map(c=>`<button class="chip ${c[0]===cat?'on':''}" onclick="cat='${c[0]}';renderGrid()">${c[1]}</button>`).join('');
+ const q=$('q').value.toLowerCase(),L=(live?[{n:U.name+' (tú)',t:live.title,img:avatar(U.name),v:live.viewers,loc:U.loc,c:'newstreamer',me:1}]:[]).concat(S).filter(s=>(cat==='all'||s.c===cat)&&s.n.toLowerCase().includes(q));
+ $('grid').innerHTML=L.map((s,i)=>`<div class="card overflow-hidden cursor-pointer hover:border-zinc-600 transition group" data-i="${i}"><div class="relative aspect-[4/5] bg-gradient-to-br from-rose-900/50 to-zinc-900"><img src="${esc(s.img)}" alt="" loading="lazy" onerror="this.remove()" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+ <span class="absolute top-3 left-3 bg-rose-600/90 text-[10px] font-bold px-2.5 py-1 rounded-md">● EN VIVO</span><span class="absolute bottom-3 left-3 bg-black/60 text-xs px-2.5 py-1 rounded-lg">👁 ${s.v.toLocaleString()}</span><span class="absolute bottom-3 right-3 bg-black/60 text-[11px] px-2.5 py-1 rounded-lg">📍 ${esc(s.loc)}</span></div>
+ <div class="p-3"><b class="text-sm block truncate">${esc(s.n)}</b><p class="text-xs text-zinc-400 truncate">${esc(s.t)}</p></div></div>`).join('')||'<p class="text-sm text-zinc-500">Sin resultados.</p>';
+ $('grid').querySelectorAll('[data-i]').forEach(el=>el.onclick=()=>{const s=L[el.dataset.i];s.me?show('studio'):openRoom(s)})}
+$('q').oninput=renderGrid;
+function promo(t,d){openModal(mhead(esc(t))+`<p class="text-xs text-zinc-300">${esc(d)}</p><button class="btn w-full" onclick="closeModal()">¡Entendido!</button>`)}
+function rankModal(){openModal(mhead('🏆 Ranking semanal')+[['Dinamicasss! ✨',48250],['Miss me? 💫',35100],['Bailemos 💃',22400]].map((r,i)=>`<div class="bg-zinc-900 p-3 rounded-xl flex justify-between text-xs"><span>${['🥇','🥈','🥉'][i]} ${esc(r[0])}</span><b class="text-rose-400">${r[1].toLocaleString()} 💎</b></div>`).join(''))}
+
+/* ---------- ROOM (espectador) ---------- */
+let room=null,roomT=[];const NAMES=['Alex_99','Maria_V','Carlos_Dev','Luna','Pablo_R','Sofi','Dani','Kira'],MSG=['¡Hola a todos! 👋','Qué buen directo','Saludos desde México','🔥🔥🔥','Primera vez aquí, me encanta','Sube el volumen porfa','❤️❤️','¡Qué crack!'];
+function line(box,n,t,cls){const d=document.createElement('div');d.className=cls||'';d.innerHTML=`<b class="${n==='Tú'?'text-rose-400':'text-zinc-300'}">${esc(n)}:</b> ${esc(t)}`;box.append(d);while(box.children.length>80)box.firstChild.remove();box.scrollTop=1e9}
+function openRoom(s){room=s;$('room-img').src=s.img;$('room-av').src=s.img;$('room-name').textContent=s.n;$('room-loc').textContent='📍 '+s.loc;$('room-title').textContent=s.t;$('room-views').textContent=s.v.toLocaleString();$('chat').innerHTML='';
+ line($('chat'),'Sistema','Sé respetuoso con el streamer.');show('room');
+ roomT=[setInterval(()=>line($('chat'),rnd(NAMES),rnd(MSG)),2500),setInterval(()=>$('room-views').textContent=(s.v+Math.floor(Math.random()*40-15)).toLocaleString(),4000)]}
+function closeRoom(q){roomT.forEach(clearInterval);roomT=[];room=null;if(!q)show('explore')}
+let lastC=0;function sendChat(){const t=$('chat-in').value.trim();if(!t||Date.now()-lastC<1000)return;lastC=Date.now();line($('chat'),'Tú',t);$('chat-in').value=''}
+$('chat-send').onclick=sendChat;$('chat-in').onkeydown=e=>e.key==='Enter'&&sendChat();
+function heart(e){const s=document.createElement('span');s.textContent=e;s.style.cssText='position:absolute;bottom:50px;right:40px;font-size:28px';$('room-v').append(s);s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.random()*80-40}px,-200px)`,opacity:0}],{duration:1400}).onfinish=()=>s.remove()}
+
+/* ---------- GIFTS ---------- */
+const G={normal:[['Rosa',10,'🌹'],['Corazón',20,'❤️'],['Estrella',50,'⭐'],['Café',60,'☕'],['Girasol',80,'🌻'],['Osito',99,'🧸']],
+ amor:[['Beso',150,'💋'],['Cupido',300,'💘'],['Ramo',500,'💐'],['Anillo',800,'💍']],
+ lujo:[['Corona',1000,'👑'],['Collar de oro',1500,'📿'],['Reloj',2000,'⌚'],['Maletín cash',3500,'💼'],['Trofeo',4500,'🏆']],
+ fiesta:[['Confeti',199,'🎉'],['Pastel',900,'🎂'],['Fuegos artificiales',1200,'🎆'],['Champaña',1800,'🍾'],['Globo',4000,'🎈']],
+ exclusivo:[['Unicornio',5000,'🦄'],['Yate',7500,'🛥️'],['Deportivo',10000,'🏎️'],['Dragón',15000,'🐉'],['Cohete',20000,'🚀'],['Galaxia',30000,'🌌'],['Castillo',50000,'🏰']]};
+const GL={normal:'Normales',amor:'Amor 💘',lujo:'Lujo 💎',fiesta:'Fiesta 🎉',exclusivo:'Exclusivos 🚀'};
+let gc='normal',gs=G.normal[0],gn=1,combo={n:0,t:0};
+function giftModal(){if(!room)return;gcDraw()}
+function gcDraw(){openModal(mhead('🎁 Regalos')+`<div class="flex gap-2 overflow-x-auto">${Object.keys(G).map(k=>`<button class="chip ${k===gc?'on':''}" onclick="gc='${k}';gs=G[gc][0];gcDraw()">${GL[k]}</button>`).join('')}</div>
+<div class="grid grid-cols-4 gap-2">${G[gc].map((g,i)=>`<button onclick="gs=G[gc][${i}];gcDraw()" class="p-2 rounded-xl border text-center ${g===gs?'border-rose-600 bg-rose-600/10':'border-zinc-800 bg-zinc-900'}"><span class="text-3xl block">${g[2]}</span><b class="text-[10px] block truncate">${g[0]}</b><span class="text-[10px] text-rose-400">💎 ${g[1].toLocaleString()}</span></button>`).join('')}</div>
+<div class="flex items-center justify-between text-xs"><span>Cantidad:</span><div class="flex gap-1">${[1,5,10,50].map(n=>`<button class="chip ${n===gn?'on':''}" onclick="gn=${n};gcDraw()">x${n}</button>`).join('')}</div></div>
+<div class="flex items-center justify-between pt-2 border-t border-zinc-800 text-xs"><span>Saldo: <b>💎 ${U.gems.toLocaleString()}</b></span><div class="flex gap-2"><button class="btn2" onclick="walletModal()">Recargar</button><button class="btn" onclick="sendGift()">Enviar ${gs[2]} x${gn}</button></div></div>`)}
+function sendGift(){const tot=gs[1]*gn;if(U.gems<tot){toast('Saldo insuficiente.');return walletModal()}
+ U.gems-=tot;saveU();head();closeModal();playGift(gs,gn,U.name);line($('chat'),U.name,`envió ${gs[2]} ${gs[0]} x${gn}`,'bg-rose-500/10 rounded-lg p-1');
+ combo.n=Date.now()-combo.t<4000?combo.n+gn:gn;combo.t=Date.now();const c=$('combo');c.textContent='COMBO x'+combo.n;c.classList.remove('hid');c.animate([{transform:'scale(1.6)'},{transform:'scale(1)'}],{duration:250});setTimeout(()=>Date.now()-combo.t>=3900&&c.classList.add('hid'),4000)}
+function fx(t,size,css){const e=document.createElement('div');e.textContent=t;e.style.cssText=`position:absolute;font-size:${size}px;will-change:transform;${css||''}`;$('fx').append(e);return e}
+const done=(e,a)=>a.onfinish=()=>e.remove();
+function playGift(g,n,from){const[name,cost,ic]=g,W=innerWidth,H=innerHeight;beep(cost);
+ const ban=fx(`${esc(from)} envió ${ic} ${name} x${n}`,14,'top:70px;right:12px;background:rgba(0,0,0,.8);border:1px solid #e11d48;padding:10px 14px;border-radius:14px;color:#fff;font-weight:700');ban.innerHTML=`${esc(from)} envió <span style="font-size:22px">${ic}</span> ${esc(name)} x${n}`;
+ done(ban,ban.animate([{transform:'translateX(120%)'},{transform:'none',offset:.1},{transform:'none',offset:.9},{transform:'translateX(120%)'}],{duration:3500}));
+ const cnt=Math.min(n,12);
+ if(cost<100)for(let i=0;i<cnt+4;i++){const e=fx(ic,30,`left:${10+Math.random()*80}%;top:${H}px`);done(e,e.animate([{transform:'translateY(0)',opacity:1},{transform:`translateY(-${H*.8}px) rotate(${Math.random()*60-30}deg)`,opacity:0}],{duration:2000+Math.random()*1000,delay:i*120}))}
+ else if(cost<1000)for(let i=0;i<14+cnt;i++){const a=i/(14+cnt)*6.28,d=120+Math.random()*180,e=fx(ic,34,`left:${W/2}px;top:${H/2}px`);done(e,e.animate([{transform:'scale(.2)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(1.2) rotate(${Math.random()*360}deg)`,opacity:0}],{duration:1400,easing:'ease-out'}))}
+ else if(cost<5000){const e=fx(ic,140,`left:${W/2-70}px;top:${H/2-90}px`);done(e,e.animate([{transform:'scale(0) rotate(-40deg)',opacity:0},{transform:'scale(1.2) rotate(8deg)',opacity:1,offset:.3},{transform:'scale(1)',offset:.8,opacity:1},{transform:'scale(1.5)',opacity:0}],{duration:2800}));
+  for(let i=0;i<24;i++){const s=fx('✨',22,`left:${W/2}px;top:${H/2}px`),a=Math.random()*6.28,d=100+Math.random()*220;done(s,s.animate([{transform:'scale(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) scale(1)`,opacity:0}],{duration:1800,delay:i*40}))}}
+ else{const fl=fx('',0,'inset:0;background:radial-gradient(circle,rgba(225,29,72,.5),transparent 70%)');done(fl,fl.animate([{opacity:0},{opacity:1},{opacity:0}],{duration:1200}));
+  const e=fx(ic,200,`top:${H/2-120}px;left:-250px`);done(e,e.animate([{transform:'translateX(0) scale(.6)'},{transform:`translateX(${W/2+50}px) scale(1.2)`,offset:.4},{transform:`translateX(${W/2+50}px) scale(1.3)`,offset:.7},{transform:`translateX(${W+300}px) scale(.8)`}],{duration:4200,easing:'ease-in-out'}));
+  const cf=['🎊','🎉','✨','💎','⭐'];for(let i=0;i<50;i++){const c=fx(rnd(cf),22,`left:${Math.random()*100}%;top:-30px`);done(c,c.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:`translateY(${H+60}px) rotate(${Math.random()*720}deg)`,opacity:.7}],{duration:2500+Math.random()*2000,delay:Math.random()*1500}))}
+  const t=fx(name.toUpperCase()+'!',44,`left:0;right:0;text-align:center;top:${H*.2}px;font-weight:900;color:#fbbf24;text-shadow:0 0 30px #e11d48`);done(t,t.animate([{transform:'scale(0)',opacity:0},{transform:'scale(1.1)',opacity:1,offset:.2},{opacity:1,offset:.8},{opacity:0}],{duration:3500}))}}
+let AC;function beep(cost){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const notes=cost<100?[660]:cost<1000?[523,659,784]:cost<5000?[523,659,784,1047]:[392,523,659,784,1047,1319];notes.forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+i*.09;o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.3)})}catch(e){}}
+
+/* ---------- WALLET ---------- */
+let pack=[500,4.99];
+function walletModal(){const P=[[500,4.99],[1200,9.99],[3000,24.99],[7000,49.99]];
+ openModal(mhead('💎 Recargar gemas')+`<p class="text-xs text-zinc-400">Saldo: <b class="text-white">${U.gems.toLocaleString()}</b> gemas</p><div class="grid grid-cols-2 gap-2">${P.map(p=>`<button onclick="pack=[${p}];walletModal()" class="p-3 rounded-xl border text-left ${p[0]===pack[0]?'border-rose-600 bg-rose-600/10':'border-zinc-800 bg-zinc-900'}"><b class="text-xs block">💎 ${p[0].toLocaleString()}</b><span class="text-[11px] text-zinc-400">$${p[1]} USD</span></button>`).join('')}</div>
+ <button class="btn w-full" onclick="topUp()">Pagar $${pack[1]} USD</button><p class="text-[10px] text-zinc-500">Demo: no se cobra nada. Para cobros reales conecta Stripe/PayPal en tu servidor (nunca proceses tarjetas en el navegador). Los retiros de creadores están en la pestaña “Creador”.</p>`)}
+function topUp(){U.gems+=pack[0];saveU();head();closeModal();toast(`+${pack[0].toLocaleString()} gemas añadidas (demo)`)}
+
+/* ---------- LIVE (cámara real) ---------- */
+let live=null,stream=null,tInt=null,mic=true,cam=true;
+function goLiveModal(){if(live)return show('studio');
+ openModal(mhead('🔴 Configurar transmisión')+`<div><label class="lbl">Título</label><input id="g-t" maxlength="80" class="in" value="Charlando con la comunidad 💫"></div>
+ <div><label class="lbl">Categoría</label><select id="g-c" class="in"><option>Charla & Comunidad</option><option>Música en Vivo</option><option>Gaming & Esports</option><option>Arte & Creatividad</option></select></div>
+ <p class="text-[11px] text-zinc-400 bg-zinc-900 p-3 rounded-xl">Tu navegador pedirá permiso para usar cámara y micrófono. Necesitas HTTPS (o localhost).</p><button id="g-go" class="btn w-full" onclick="startLive()">¡Iniciar directo!</button>`)}
+async function startLive(){
+ if(!navigator.mediaDevices?.getUserMedia)return toast('Tu navegador/conexión no permite cámara. Usa HTTPS.');
+ $('g-go').disabled=true;$('g-go').textContent='Solicitando permisos...';
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:{echoCancellation:true,noiseSuppression:true}})}
+ catch(e){const m={NotAllowedError:'Permiso denegado. Actívalo en el candado de la barra de direcciones.',NotFoundError:'No se encontró cámara o micrófono.',NotReadableError:'Otra app está usando la cámara.',OverconstrainedError:'Tu cámara no soporta la calidad pedida.'};toast(m[e.name]||'No se pudo acceder a la cámara.');return goLiveModal()}
+ const title=$('g-t').value.trim()||'En directo',c=$('g-c').value;closeModal();mic=cam=true;
+ live={title,viewers:1,gems:0,sec:0,start:Date.now()};$('cam').srcObject=stream;$('cam-off').classList.add('hid');$('st-sub').textContent=title;$('st-cat').textContent=c;$('st-gems').textContent=0;$('st-chat').innerHTML='';
+ const s=stream.getVideoTracks()[0].getSettings();$('st-q').textContent=`${s.width||'?'}x${s.height||'?'} ${Math.round(s.frameRate||0)}fps`;
+ line($('st-chat'),'Sistema','¡Tu directo comenzó! Saluda a tu audiencia.');show('studio');
+ tInt=setInterval(()=>{live.sec++;const k=key(new Date());U.days[k]=(U.days[k]||0)+1;if(live.sec%10===0)saveU();
+  const p=n=>String(n).padStart(2,'0');$('timer').textContent=`${p(live.sec/3600|0)}:${p((live.sec%3600)/60|0)}:${p(live.sec%60)}`;
+  if(live.sec%3===0){live.viewers=Math.max(1,live.viewers+Math.floor(Math.random()*7-2));$('st-views').textContent=live.viewers}
+  if(live.sec%4===0&&Math.random()<.6)line($('st-chat'),rnd(NAMES),rnd(MSG));
+  if(live.sec%12===0&&Math.random()<.7){const g=rnd(G.normal.concat(G.amor,G.lujo,G.fiesta));playGift(g,1,rnd(NAMES));live.gems+=g[1];U.earned+=g[1]*.6|0;$('st-gems').textContent=live.gems.toLocaleString();line($('st-chat'),'🎁','recibiste '+g[2]+' '+g[0],'text-amber-400')}},1000);
+ stream.getTracks().forEach(t=>t.onended=()=>{if(live)toast('Se perdió la conexión con el dispositivo.')})}
+function tgl(w){if(!stream)return;if(w==='mic'){mic=!mic;stream.getAudioTracks().forEach(t=>t.enabled=mic);$('b-mic').textContent=mic?'🎤':'🔇'}else{cam=!cam;stream.getVideoTracks().forEach(t=>t.enabled=cam);$('b-cam').textContent=cam?'📹':'🚫';$('cam-off').classList.toggle('hid',cam)}}
+function endLive(){if(!confirm('¿Finalizar tu transmisión?'))return;stopLive(true)}
+function stopLive(s){clearInterval(tInt);stream&&stream.getTracks().forEach(t=>t.stop());stream=null;const l=live;live=null;
+ if(l){U.history.unshift({d:new Date().toLocaleString(),sec:l.sec,gems:l.gems,title:l.title});U.history=U.history.slice(0,20);saveU()}
+ if(s&&l)toast(`Directo finalizado: ${Math.floor(l.sec/60)} min, ${l.gems} gemas.`);show('explore')}
+addEventListener('beforeunload',()=>{if(live){stream&&stream.getTracks().forEach(t=>t.stop());saveU()}});
+$('st-send').onclick=()=>{const t=$('st-in').value.trim();if(t){line($('st-chat'),'Tú',t);$('st-in').value=''}};$('st-in').onkeydown=e=>e.key==='Enter'&&$('st-send').click();
+
+/* ---------- CREATOR CENTER (retiros) ---------- */
+function streak(){let n=0;const d=new Date();if((U.days[key(d)]||0)<3600)d.setDate(d.getDate()-1);while((U.days[key(d)]||0)>=3600&&n<7){n++;d.setDate(d.getDate()-1)}return n}
+const MINUSD=20,RATE=.005;
+function renderCreator(){const st=streak(),usd=U.earned*RATE,dots=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);const s=U.days[key(d)]||0;return `<div class="flex-1 text-center"><div class="h-2 rounded-full ${s>=3600?'bg-emerald-500':'bg-zinc-800'}"></div><span class="text-[10px] text-zinc-500">${d.toLocaleDateString('es',{weekday:'short'})} · ${Math.floor(s/60)}m</span></div>`}).join('');
+ $('v-creator').innerHTML=`<h2 class="text-xl font-bold">💰 Centro de Creador</h2>
+ <div class="grid grid-cols-2 gap-3"><div class="card p-4"><span class="lbl">Ingresos retirables</span><b class="text-2xl">$${usd.toFixed(2)}</b><span class="text-[10px] text-zinc-500 block">${U.earned.toLocaleString()} gemas · 100 💎 = $${(RATE*100).toFixed(2)}</span></div>
+ <div class="card p-4"><span class="lbl">Racha de directos</span><b class="text-2xl text-emerald-400">${st}/7 días</b></div></div>
+ <div class="card p-4 space-y-3"><b class="text-sm">Requisito para retirar</b><p class="text-xs text-zinc-400">Transmitir al menos <b class="text-white">1 hora diaria durante 7 días consecutivos</b> y tener mínimo $${MINUSD} acumulados. El tiempo se mide automáticamente mientras estás en directo.</p><div class="flex gap-1">${dots}</div>
+ <label class="lbl">Correo de PayPal</label><input id="pp" class="in" type="email" placeholder="paypal@correo.com"><button class="btn w-full" onclick="payout()">Solicitar retiro</button><p class="text-[10px] text-zinc-500">Demo: los pagos reales y su verificación deben hacerse en tu servidor.</p></div>
+ <div class="card p-4"><b class="text-sm">Historial de directos</b><div class="mt-2 space-y-1 text-xs">${U.history.map(h=>`<div class="flex justify-between bg-zinc-900 rounded-lg p-2"><span class="truncate">${esc(h.d)} · ${esc(h.title)}</span><span>${Math.floor(h.sec/60)}m · 💎${h.gems}</span></div>`).join('')||'<p class="text-zinc-500">Aún no has transmitido.</p>'}</div></div>`}
+function payout(){const em=$('pp').value.trim(),usd=U.earned*RATE;
+ if(streak()<7)return toast(`Te faltan ${7-streak()} días de racha (1h diaria).`);if(usd<MINUSD)return toast(`Mínimo de retiro: $${MINUSD}.`);if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em))return toast('Correo de PayPal no válido.');
+ U.earned=0;saveU();renderCreator();toast('Solicitud de retiro enviada a revisión ✅')}
+
+/* ---------- MESSAGES ---------- */
+const CONT=[['Sophia Miller','¡Gracias por el regalo en el live! ❤️'],['Liam Carter','¿Cuándo haces la próxima partida?']];let dmC=CONT[0][0];
+function renderInbox(){const vis=CONT.filter(c=>!U.blocked.includes(c[0]));if(!vis.find(c=>c[0]===dmC))dmC=vis[0]?.[0];
+ $('inbox').innerHTML=vis.map(c=>`<div onclick="dmC='${c[0]}';renderInbox()" class="p-3 rounded-xl flex gap-3 items-center cursor-pointer ${c[0]===dmC?'bg-zinc-900 border border-zinc-800':'hover:bg-zinc-900/50'}"><img src="${avatar(c[0])}" class="w-10 h-10 rounded-full" alt=""><div class="min-w-0"><b class="text-xs">${c[0]}</b><p class="text-[11px] text-zinc-400 truncate">${esc((U.dm[c[0]]||[]).slice(-1)[0]?.t||c[1])}</p></div></div>`).join('')||'<p class="p-3 text-xs text-zinc-500">Sin conversaciones.</p>';
+ $('dm-name').textContent=dmC||'';const m=U.dm[dmC]||[{w:'them',t:'¡Hola! Gracias por apoyar mi directo ✨'}];$('dm').innerHTML=m.map(x=>`<div class="flex ${x.w==='me'?'justify-end':''}"><div class="${x.w==='me'?'bg-rose-600':'bg-zinc-800'} p-3 rounded-2xl max-w-[80%]">${esc(x.t)}</div></div>`).join('');$('dm').scrollTop=1e9}
+function sendDM(){const t=$('dm-in').value.trim();if(!t||!dmC)return;const c=dmC;(U.dm[c]=U.dm[c]||[{w:'them',t:'¡Hola! Gracias por apoyar mi directo ✨'}]).push({w:'me',t});$('dm-in').value='';saveU();renderInbox();
+ setTimeout(()=>{if(!U.blocked.includes(c)){U.dm[c].push({w:'them',t:rnd(['¡Jaja genial!','Claro, cuéntame más 😊','¡Nos vemos en el live!'])});saveU();if(cur==='msgs'&&dmC===c)renderInbox()}},1500)}
+$('dm-send').onclick=sendDM;$('dm-in').onkeydown=e=>e.key==='Enter'&&sendDM();
+function blockUser(){if(!dmC||!confirm('¿Bloquear a '+dmC+'?'))return;U.blocked.push(dmC);saveU();renderInbox();toast('Usuario bloqueado.')}
+
+/* ---------- PROFILE ---------- */
+function renderMe(){const P=U.privacy,sel=(k,o)=>`<select id="pv-${k}" class="in">${o.map(x=>`<option value="${x[0]}" ${P[k]===x[0]?'selected':''}>${x[1]}</option>`).join('')}</select>`,vis=[['all','Todos'],['friends','Solo amigos'],['none','Nadie']];
+ $('v-me').innerHTML=`<div class="card p-5 flex gap-4 items-center"><img src="${avatar(U.name)}" class="w-20 h-20 rounded-full border-2 border-rose-600" alt=""><div class="flex-1"><h2 class="text-lg font-bold">${esc(U.name)}</h2><p class="text-xs text-rose-400">@${esc(U.user)}</p><p class="text-xs text-zinc-400">📍 ${esc(U.loc)}</p></div><div class="text-center text-xs"><b class="block text-sm">${U.followers}</b>Seguidores</div></div>
+ <div class="card p-5 space-y-3"><b class="text-sm">Editar perfil</b><div class="grid sm:grid-cols-2 gap-3"><div><label class="lbl">Nombre</label><input id="e-name" class="in" maxlength="30" value="${esc(U.name)}"></div><div><label class="lbl">Ubicación</label><input id="e-loc" class="in" maxlength="40" value="${esc(U.loc)}"></div></div><div><label class="lbl">Biografía</label><textarea id="e-bio" class="in" rows="3" maxlength="160">${esc(U.bio)}</textarea></div><button class="btn" onclick="saveMe()">Guardar</button></div>
+ <div class="card p-5 space-y-3"><b class="text-sm">🛡️ Privacidad</b><div class="grid sm:grid-cols-3 gap-3"><div><label class="lbl">¿Quién me ve conectado?</label>${sel('online',vis)}</div><div><label class="lbl">¿Quién ve mi ubicación?</label>${sel('loc',vis)}</div><div><label class="lbl">¿Quién ve mis publicaciones?</label>${sel('posts',[['all','Público'],['friends','Seguidores'],['none','Solo yo']])}</div></div></div>
+ <div class="card p-5 space-y-2"><b class="text-sm">🚫 Bloqueados</b>${U.blocked.map((b,i)=>`<div class="flex justify-between bg-zinc-900 p-2 rounded-lg text-xs">${esc(b)}<button class="text-rose-400" onclick="U.blocked.splice(${i},1);saveU();renderMe()">Desbloquear</button></div>`).join('')||'<p class="text-xs text-zinc-500">Nadie bloqueado.</p>'}</div>
+ <div class="flex gap-2"><button class="btn2" onclick="logout()">Cerrar sesión</button><button class="btn2 !text-rose-400" onclick="delAcc()">Eliminar cuenta</button></div>`}
+function saveMe(){const n=$('e-name').value.trim();if(n.length<2)return toast('Nombre muy corto.');Object.assign(U,{name:n,loc:$('e-loc').value.trim(),bio:$('e-bio').value.trim()});['online','loc','posts'].forEach(k=>U.privacy[k]=$('pv-'+k).value);saveU();head();renderMe();toast('Perfil guardado ✅')}
+function delAcc(){if(live)return toast('Finaliza tu directo primero.');if(!confirm('Esto borrará tu cuenta y todos tus datos. ¿Continuar?'))return;delete DB.users[U.id];DB.s=null;save();location.reload()}
+
+/* ---------- INIT ---------- */
+setMode('login');
+if(DB.s&&DB.users[DB.s]){U=DB.users[DB.s];$('auth').classList.add('hid');U.name?enterApp():$('setup').classList.remove('hid')}
+</script></body></html>
